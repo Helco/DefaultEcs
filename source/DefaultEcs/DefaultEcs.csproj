@@ -42,7 +42,6 @@
 
 	<PropertyGroup Condition="'$(LOCAL_VERSION)' == 'true'">
 		<SignAssembly>True</SignAssembly>
-		<AssemblyOriginatorKeyFile>..\..\..\ds.snk</AssemblyOriginatorKeyFile>
 		<Version>0-local$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</Version>
 	</PropertyGroup>
 
@@ -51,7 +50,6 @@
 		<IncludeSymbols Condition="'$(CI_VERSION)' != 'true'">true</IncludeSymbols>
 		<SymbolPackageFormat Condition="'$(CI_VERSION)' != 'true'">snupkg</SymbolPackageFormat>
 		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-		<AssemblyOriginatorKeyFile>..\..\ds.snk</AssemblyOriginatorKeyFile>
 		<Version Condition="'$(CI_VERSION)' == 'true'">0-ci$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</Version>
 	</PropertyGroup>
 
