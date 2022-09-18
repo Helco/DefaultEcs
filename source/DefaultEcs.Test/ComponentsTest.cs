@@ -30,6 +30,28 @@ namespace DefaultEcs.Test
             Check.That(entity4.Get<string>()).IsEqualTo(strings[entity4]);
         }
 
+#if SAFEDEBUG
+        [Fact]
+        public void Safe_GetComponents_Should_throw_on_reallocation()
+        {
+            using World world = new();
+
+            var entity = world.CreateEntity();
+            entity.Set(1);
+
+            Check.ThatCode(() =>
+            {
+                var ints = world.GetComponents<int>();
+                // Cause a reallocation
+                for (int i = 0; i < 8; i++)
+                {
+                    world.CreateEntity().Set(i);
+                }
+                return ints[entity];
+            }).Throws<DefaultEcsException>();
+        }
+#endif
+
         #endregion
     }
 }

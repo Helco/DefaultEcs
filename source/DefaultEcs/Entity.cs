@@ -370,6 +370,8 @@ namespace DefaultEcs
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
+            if (!IsAlive && WorldId != 0)
+                throw new Exception("NOPE");
             Publisher.Publish(WorldId, new EntityDisposingMessage(EntityId));
             Publisher.Publish(WorldId, new EntityDisposedMessage(EntityId));
         }

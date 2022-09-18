@@ -304,7 +304,12 @@ namespace DefaultEcs.Internal
         public Span<T> AsSpan() => new(_components, 0, _lastComponentIndex + 1);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Components<T> AsComponents() => new(_mapping, _components);
+        public Components<T> AsComponents() =>
+#if DEFAULTECS_SAFE
+            new(_mapping, _components, () => (_mapping, _components));
+#else
+            new(_mapping, _components);
+#endif
 
         public EntityEnumerable GetEntities() => new(this);
 
@@ -315,9 +320,9 @@ namespace DefaultEcs.Internal
             ArrayExtension.Trim(ref _mapping, Array.FindLastIndex(_mapping, i => i != -1) + 1);
         }
 
-        #endregion
+#endregion
 
-        #region ISortable
+#region ISortable
 
         void ISortable.Sort(ref bool shouldContinue)
         {
@@ -366,6 +371,6 @@ namespace DefaultEcs.Internal
             }
         }
 
-        #endregion
+#endregion
     }
 }

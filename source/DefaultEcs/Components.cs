@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace DefaultEcs
 {
@@ -11,9 +12,20 @@ namespace DefaultEcs
     {
         private readonly int[] _mapping;
         private readonly T[] _components;
+#if DEFAULTECS_SAFE
+        /// <summary>
+        /// During iteration, the arrays in ComponentPool might be reallocated, then the references here
+        /// are stale and do not propagate changes and will throw exception if used with a high entity id
+        /// </summary>
+        private readonly Func<(int[] mapping, T[] components)> _getCurrentReferences;
 
+        internal Components(int[] mapping, T[] components, Func<(int[] mapping, T[] components)> getCurrentReferences)
+        {
+            _getCurrentReferences = getCurrentReferences;
+#else
         internal Components(int[] mapping, T[] components)
         {
+#endif
             _mapping = mapping;
             _components = components;
         }
@@ -23,10 +35,21 @@ namespace DefaultEcs
         /// </summary>
         /// <param name="entity">The <see cref="Entity"/> for which to get the component of type <typeparamref name="T"/>.</param>
         /// <returns>A reference to the component of type <typeparamref name="T"/>.</returns>
+        /// <exception cref="DefaultEcsException">dfgdfg</exception>
         public ref T this[Entity entity]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => ref _components[_mapping[entity.EntityId]];
+            get
+            {
+#if DEFAULTECS_SAFE
+                var (newMapping, newComponents) = _getCurrentReferences();
+                if (!ReferenceEquals(newMapping, _mapping) || !ReferenceEquals(newComponents, _components))
+                {
+                    throw new DefaultEcsException($"Underlying pool of Components<{typeof(T).Name}> was reallocated, this instance cannot be used anymore");
+                }
+#endif
+                return ref _components[_mapping[entity.EntityId]];
+            }
         }
     }
 }
