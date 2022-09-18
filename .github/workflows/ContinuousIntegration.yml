@@ -23,9 +23,3 @@ jobs:
 
     - name: Run tests net7.0
       run: dotnet test source\DefaultEcs.Test\DefaultEcs.Test.csproj -c SafeDebug -f net7.0 /p:TEST=true
-
-    - name: Create package
-      run: dotnet pack source\DefaultEcs\DefaultEcs.csproj -c SafeDebug -o build /p:CI_VERSION=true
-
-    - name: Publish package
-      run: nuget push build\*.nupkg
