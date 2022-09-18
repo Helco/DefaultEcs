@@ -7,6 +7,7 @@
 		</TargetFrameworks>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<Configurations>Debug;Release;SafeDebug</Configurations>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -52,6 +53,10 @@
 		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 		<AssemblyOriginatorKeyFile>..\..\ds.snk</AssemblyOriginatorKeyFile>
 		<Version Condition="'$(CI_VERSION)' == 'true'">0-ci$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</Version>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='SafeDebug'">
+	  <DefineConstants>$(DefineConstants)TRACE;DEFAULTECS_SAFE</DefineConstants>
 	</PropertyGroup>
 
 	<Target Name="PreparePackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec">

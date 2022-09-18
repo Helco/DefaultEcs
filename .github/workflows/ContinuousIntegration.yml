@@ -19,32 +19,12 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '7.0.x'
-        source-url: https://nuget.pkg.github.com/Doraku/index.json
-      env:
-        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-
-    - name: Run tests net462
-      run: dotnet test source\DefaultEcs.Test\DefaultEcs.Test.csproj -c Release -f net462
-      env:
-        TEST: true
-
-    - name: Run tests net48
-      run: dotnet test source\DefaultEcs.Test\DefaultEcs.Test.csproj -c Release -f net48
-      env:
-        TEST: true
 
     - name: Run tests net7.0
-      run: dotnet test source\DefaultEcs.Test\DefaultEcs.Test.csproj -c Release -f net7.0
-      env:
-        TEST: true
-      
-    - name: Decrypte snk file
-      env:
-        SNK_KEY: ${{ secrets.SNK_KEY }}
-      run: gpg --quiet --batch --yes --decrypt --passphrase="$env:SNK_KEY" --output ds.snk ds.snk.gpg
+      run: dotnet test source\DefaultEcs.Test\DefaultEcs.Test.csproj -c SafeDebug -f net7.0 /p:TEST=true
 
     - name: Create package
-      run: dotnet pack source\DefaultEcs\DefaultEcs.csproj -c Release -o build /p:CI_VERSION=true
+      run: dotnet pack source\DefaultEcs\DefaultEcs.csproj -c SafeDebug -o build /p:CI_VERSION=true
 
     - name: Publish package
       run: nuget push build\*.nupkg
