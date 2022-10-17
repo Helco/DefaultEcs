@@ -79,6 +79,16 @@ namespace DefaultEcs
             }
         }
 
+#if DEFAULTECS_SAFE
+        private void ThrowIfNotAliveAnymore()
+        {
+            if (!IsAlive && WorldId != 0)
+            {
+                throw new DefaultEcsException($"Dead entity {this} was accessed.");
+            }
+        }
+#endif
+
         private void InnerSet<T>(bool isNew)
         {
             ref ComponentEnum components = ref Components;
@@ -106,7 +116,13 @@ namespace DefaultEcs
         /// </summary>
         /// <returns>true if the <see cref="Entity"/> is enabled; otherwise, false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsEnabled() => WorldId != 0 && Components[World.IsEnabledFlag];
+        public bool IsEnabled()
+        {
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
+            return WorldId != 0 && Components[World.IsEnabledFlag];
+        }
 
         /// <summary>
         /// Enables the current <see cref="Entity"/> so it can appear in <see cref="EntitySet"/>.
@@ -116,6 +132,9 @@ namespace DefaultEcs
         public void Enable()
         {
             ThrowIf(WorldId == 0, "Entity was not created from a World");
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
 
             ref ComponentEnum components = ref Components;
             if (!components[World.IsEnabledFlag])
@@ -133,6 +152,9 @@ namespace DefaultEcs
         public void Disable()
         {
             ThrowIf(WorldId == 0, "Entity was not created from a World");
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
 
             ref ComponentEnum components = ref Components;
             if (components[World.IsEnabledFlag])
@@ -148,7 +170,13 @@ namespace DefaultEcs
         /// <typeparam name="T">The type of the component.</typeparam>
         /// <returns>true if the <see cref="Entity"/> has a component of type <typeparamref name="T"/> enabled; otherwise, false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsEnabled<T>() => WorldId != 0 && Components[ComponentManager<T>.Flag];
+        public bool IsEnabled<T>()
+        {
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
+            return WorldId != 0 && Components[ComponentManager<T>.Flag];
+        }
 
         /// <summary>
         /// Enables the current <see cref="Entity"/> component of type <typeparamref name="T"/> so it can appear in <see cref="EntitySet"/>.
@@ -160,6 +188,9 @@ namespace DefaultEcs
         public void Enable<T>()
         {
             ThrowIf(WorldId == 0, "Entity was not created from a World");
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
 
             if (Has<T>())
             {
@@ -182,6 +213,9 @@ namespace DefaultEcs
         public void Disable<T>()
         {
             ThrowIf(WorldId == 0, "Entity was not created from a World");
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
 
             ref ComponentEnum components = ref Components;
             if (components[ComponentManager<T>.Flag])
@@ -202,6 +236,9 @@ namespace DefaultEcs
         public void Set<T>(in T component)
         {
             ThrowIf(WorldId == 0, "Entity was not created from a World");
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
 
             InnerSet<T>(ComponentManager<T>.GetOrCreate(WorldId).Set(EntityId, component));
         }
@@ -228,6 +265,9 @@ namespace DefaultEcs
         {
             ThrowIf(WorldId == 0, "Entity was not created from a World");
             ThrowIf(WorldId != reference.WorldId, "Reference Entity comes from a different World");
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
 
             ComponentPool<T> pool = ComponentManager<T>.Get(WorldId);
             ThrowIf(!(pool?.Has(reference.EntityId) ?? false), $"Reference Entity does not have a component of type {typeof(T)}");
@@ -245,6 +285,9 @@ namespace DefaultEcs
         public void SetSameAsWorld<T>()
         {
             ThrowIf(WorldId == 0, "Entity was not created from a World");
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
 
             ComponentPool<T> pool = ComponentManager<T>.Get(WorldId);
             ThrowIf(!(pool?.Has(0) ?? false), $"World does not have a component of type {typeof(T)}");
@@ -259,6 +302,9 @@ namespace DefaultEcs
         /// <typeparam name="T">The type of the component.</typeparam>
         public void Remove<T>()
         {
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
             if (ComponentManager<T>.Get(WorldId)?.Remove(EntityId) == true)
             {
                 ref ComponentEnum components = ref Components;
@@ -278,6 +324,9 @@ namespace DefaultEcs
         public void NotifyChanged<T>()
         {
             ThrowIf(WorldId == 0, "Entity was not created from a World");
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
             ThrowIf(!Has<T>(), $"Entity does not have a component of type {typeof(T)}");
 
             Publisher.Publish(WorldId, new EntityComponentChangedMessage<T>(EntityId, Components));
@@ -294,7 +343,13 @@ namespace DefaultEcs
         /// <typeparam name="T">The type of the component.</typeparam>
         /// <returns>true if the <see cref="Entity"/> has a component of type <typeparamref name="T"/>; otherwise, false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has<T>() => ComponentManager<T>.Get(WorldId)?.Has(EntityId) ?? false;
+        public bool Has<T>()
+        {
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
+            return ComponentManager<T>.Get(WorldId)?.Has(EntityId) ?? false;
+        }
 
         /// <summary>
         /// Gets the component of type <typeparamref name="T"/> on the current <see cref="Entity"/>.
@@ -303,7 +358,13 @@ namespace DefaultEcs
         /// <returns>A reference to the component.</returns>
         /// <exception cref="Exception"><see cref="Entity"/> was not created from a <see cref="DefaultEcs.World"/> or does not have a component of type <typeparamref name="T"/>.</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Get<T>() => ref ComponentManager<T>.Pools[WorldId].Get(EntityId);
+        public ref T Get<T>()
+        {
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
+            return ref ComponentManager<T>.Pools[WorldId].Get(EntityId);
+        }
 
         /// <summary>
         /// Creates a copy of current <see cref="Entity"/> with all of its components in the given <see cref="DefaultEcs.World"/> using the given <see cref="ComponentCloner"/>.
@@ -320,6 +381,9 @@ namespace DefaultEcs
             cloner.ThrowIfNull();
 
             ThrowIf(WorldId == 0, "Entity was not created from a World");
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
 
             Entity copy = world.CreateEntity();
 
@@ -357,7 +421,13 @@ namespace DefaultEcs
         /// </summary>
         /// <param name="reader">The <see cref="IComponentReader"/> instance to be used as callback with the current <see cref="Entity"/> components.</param>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> is null.</exception>
-        public void ReadAllComponents(IComponentReader reader) => Publisher.Publish(WorldId, new ComponentReadMessage(EntityId, reader.ThrowIfNull()));
+        public void ReadAllComponents(IComponentReader reader)
+        {
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
+            Publisher.Publish(WorldId, new ComponentReadMessage(EntityId, reader.ThrowIfNull()));
+        }
 
         #endregion
 
@@ -370,8 +440,9 @@ namespace DefaultEcs
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            if (!IsAlive && WorldId != 0)
-                throw new Exception("NOPE");
+#if DEFAULTECS_SAFE
+            ThrowIfNotAliveAnymore();
+#endif
             Publisher.Publish(WorldId, new EntityDisposingMessage(EntityId));
             Publisher.Publish(WorldId, new EntityDisposedMessage(EntityId));
         }

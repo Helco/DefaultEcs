@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using DefaultEcs.Serialization;
 using NFluent;
+using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace DefaultEcs.Test
@@ -668,6 +669,11 @@ namespace DefaultEcs.Test
             Check.That(entity.GetHashCode()).IsEqualTo(deletedEntity.GetHashCode());
         }
 
+        /* The next test is debatable whether correct (calling Has after Dispose)
+         * In any case it clashes with the safety checks as exactly such wrong
+         * behavior is to be detected and prevented.
+         */
+#if !SAFEDEBUG
         [Fact]
         public void Dispose_Should_remove_all_component()
         {
@@ -687,6 +693,7 @@ namespace DefaultEcs.Test
 
             Check.That(entity.Has<bool>()).IsFalse();
         }
+#endif
 
         [Fact]
         public void CopyTo_Should_copy_entity_with_its_components()
@@ -896,6 +903,45 @@ namespace DefaultEcs.Test
 
             Check.That(entity.IsEnabled<bool>()).IsTrue();
         }
+
+#if SAFEDEBUG
+        [Fact]
+        public void Dead_Entities_Should_throw_when_used()
+        {
+            using World world = new();
+            Entity entity = world.CreateEntity();
+            entity.Dispose();
+            Entity otherEntity = world.CreateEntity(); // increase difficulty: entity id is used with another version
+            otherEntity.Set(3);
+            world.Set(3);
+
+            Check.That(entity.IsAlive).Equals(false);
+
+            Check.ThatCode(() => entity.Enable()).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.Disable()).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.IsEnabled<int>()).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.Enable<int>()).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.Disable<int>()).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.Set(0)).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.Set<int>()).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.SetSameAs<int>(otherEntity)).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.SetSameAsWorld<int>()).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.Remove<int>()).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.NotifyChanged<int>()).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.Has<int>()).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.Get<int>()).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.CopyTo(world)).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.ReadAllComponents(null!)).Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.Dispose()).Throws<DefaultEcsException>();
+
+            Check.ThatCode(() => entity.World).Not.Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.Equals(default)).Not.Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity != default).Not.Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity != default).Not.Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.GetHashCode()).Not.Throws<DefaultEcsException>();
+            Check.ThatCode(() => entity.ToString()).Not.Throws<DefaultEcsException>();
+        }
+#endif
 
         #endregion
     }
