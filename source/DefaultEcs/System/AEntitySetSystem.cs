@@ -201,6 +201,7 @@ namespace DefaultEcs.System
         /// Does nothing if <see cref="IsEnabled"/> is false or if the inner <see cref="EntitySet"/> is empty.
         /// </summary>
         /// <param name="state">The state to use.</param>
+        /// <exception cref="DefaultEcsException">Thrown of inproper modifications during update</exception>
         public void Update(T state)
         {
             if (IsEnabled && Set.Count > 0)
@@ -218,6 +219,9 @@ namespace DefaultEcs.System
                 }
                 else
                 {
+#if DEFAULTECS_SAFE
+                    uint versionBefore = Set.Version;
+#endif
                     _runnable.EntitiesPerIndex = Set.Count / _runner.DegreeOfParallelism;
 
                     if (_runnable.EntitiesPerIndex < _minEntityCountByRunnerIndex)
@@ -229,6 +233,12 @@ namespace DefaultEcs.System
                         _runnable.CurrentState = state;
                         _runner.Run(_runnable);
                     }
+#if DEFAULTECS_SAFE
+                    if (Set.Version != versionBefore)
+                    {
+                        throw new DefaultEcsException("Content of EntitySet was changed during update without using a buffer");
+                    }
+#endif
                 }
 
                 Set.Complete();

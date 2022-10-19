@@ -40,6 +40,10 @@ namespace DefaultEcs
             private set;
         }
 
+#if DEFAULTECS_SAFE
+        internal uint Version { get; private set; }
+#endif
+
         #endregion
 
         #region Initialisation
@@ -118,6 +122,9 @@ namespace DefaultEcs
                 Count = 0;
                 _mapping.Fill(-1);
                 _sortedIndex = 0;
+#if DEFAULTECS_SAFE
+                Version = unchecked(Version + 1);
+#endif
             }
         }
 
@@ -126,11 +133,17 @@ namespace DefaultEcs
         {
             ArrayExtension.Trim(ref _entities, Count);
             ArrayExtension.Trim(ref _mapping, Array.FindLastIndex(_mapping, i => i != -1) + 1);
+#if DEFAULTECS_SAFE
+            Version = unchecked(Version + 1);
+#endif
         }
 
         void Internal.IEntityContainer.Add(int entityId)
         {
             ArrayExtension.EnsureLength(ref _mapping, entityId, _worldMaxCapacity, -1);
+#if DEFAULTECS_SAFE
+            Version = unchecked(Version + 1);
+#endif
 
             ref int index = ref _mapping[entityId];
             if (index == -1)
@@ -152,6 +165,9 @@ namespace DefaultEcs
 
         void Internal.IEntityContainer.Remove(int entityId)
         {
+#if DEFAULTECS_SAFE
+            Version = unchecked(Version + 1);
+#endif
             if (entityId < _mapping.Length)
             {
                 ref int index = ref _mapping[entityId];

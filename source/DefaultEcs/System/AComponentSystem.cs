@@ -153,6 +153,10 @@ namespace DefaultEcs.System
             {
                 PreUpdate(state);
 
+#if DEFAULTECS_SAFE
+                Components<TComponent> componentsBefore = _components.AsComponents();
+#endif
+
                 _runnable.ComponentsPerIndex = _components.Count / _runner.DegreeOfParallelism;
 
                 if (_runnable.ComponentsPerIndex < _minComponentCountByRunnerIndex)
@@ -164,6 +168,10 @@ namespace DefaultEcs.System
                     _runnable.CurrentState = state;
                     _runner.Run(_runnable);
                 }
+
+#if DEFAULTECS_SAFE
+                componentsBefore.ThrowIfReallocated();
+#endif
 
                 PostUpdate(state);
             }

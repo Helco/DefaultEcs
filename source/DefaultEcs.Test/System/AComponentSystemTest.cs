@@ -31,6 +31,23 @@ namespace DefaultEcs.Test.System
             }
         }
 
+        private sealed class ReallocationSystem : AComponentSystem<int, bool>
+        {
+            public ReallocationSystem(World world)
+                : base(world)
+            { }
+
+            protected override void Update(int state, ref bool component)
+            {
+                base.Update(state, ref component);
+
+                for (int i = 0; i < state; i++)
+                {
+                    World.CreateEntity().Set(false);
+                }
+            }
+        }
+
         #region Tests
 
         [Fact]
@@ -150,6 +167,18 @@ namespace DefaultEcs.Test.System
             Check.That(entity3.Get<bool>()).IsTrue();
         }
 
-        #endregion
+#if SAFEDEBUG
+        [Fact]
+        public void Update_Should_throw_on_reallocation()
+        {
+            using World world = new();
+            world.CreateEntity().Set(true);
+
+            using ISystem<int> system = new ReallocationSystem(world);
+            Check.ThatCode(() => system.Update(16)).Throws<DefaultEcsException>();
+        }
+#endif
+
+#endregion
     }
 }

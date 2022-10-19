@@ -276,11 +276,15 @@ namespace DefaultEcs.System
         /// Does nothing if <see cref="IsEnabled"/> is false or if the inner <see cref="EntityMultiMap{TKey}"/> is empty.
         /// </summary>
         /// <param name="state">The state to use.</param>
+        /// <exception cref="DefaultEcsException">Thrown in case of inproper modifications during update</exception>
         public void Update(TState state)
         {
             if (IsEnabled)
             {
                 Span<TKey> keys = GetKeys();
+#if DEFAULTECS_SAFE
+                uint versionBefore = MultiMap.Version;
+#endif
 
                 if (keys.Length > 0)
                 {
@@ -322,6 +326,12 @@ namespace DefaultEcs.System
                         }
                     }
 
+#if DEFAULTECS_SAFE
+                    if (MultiMap.Version != versionBefore)
+                    {
+                        throw new DefaultEcsException("Content of EntityMultiMap was changed during update");
+                    }
+#endif
                     MultiMap.Complete();
 
                     PostUpdate(state);

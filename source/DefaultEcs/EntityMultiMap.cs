@@ -231,6 +231,10 @@ namespace DefaultEcs
         /// <returns>The <see cref="Entity"/> instances associated with the specified key.</returns>
         public ReadOnlySpan<Entity> this[TKey key] => _entities[key].GetEntities();
 
+#if DEFAULTECS_SAFE
+        internal uint Version { get; private set; }
+#endif
+
         #endregion
 
         #region Initialisation
@@ -365,6 +369,9 @@ namespace DefaultEcs
                 {
                     entities.Clear();
                 }
+#if DEFAULTECS_SAFE
+                Version = unchecked(Version + 1);
+#endif
             }
         }
 
@@ -381,11 +388,17 @@ namespace DefaultEcs
             {
                 entities.TrimExcess();
             }
+#if DEFAULTECS_SAFE
+            Version = unchecked(Version + 1);
+#endif
         }
 
         void Internal.IEntityContainer.Add(int entityId)
         {
             ArrayExtension.EnsureLength(ref _mapping, entityId, _worldMaxCapacity);
+#if DEFAULTECS_SAFE
+            Version = unchecked(Version + 1);
+#endif
 
             ref Mapping mapping = ref _mapping[entityId];
             if (mapping.Entities is null)
@@ -406,6 +419,10 @@ namespace DefaultEcs
 
         void Internal.IEntityContainer.Remove(int entityId)
         {
+#if DEFAULTECS_SAFE
+            Version = unchecked(Version + 1);
+#endif
+
             if (entityId < _mapping.Length)
             {
                 ref Mapping mapping = ref _mapping[entityId];

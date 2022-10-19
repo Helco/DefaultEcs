@@ -42,14 +42,21 @@ namespace DefaultEcs
             get
             {
 #if DEFAULTECS_SAFE
-                var (newMapping, newComponents) = _getCurrentReferences();
-                if (!ReferenceEquals(newMapping, _mapping) || !ReferenceEquals(newComponents, _components))
-                {
-                    throw new DefaultEcsException($"Underlying pool of Components<{typeof(T).Name}> was reallocated, this instance cannot be used anymore");
-                }
+                ThrowIfReallocated();
 #endif
                 return ref _components[_mapping[entity.EntityId]];
             }
         }
+
+#if DEFAULTECS_SAFE
+        internal void ThrowIfReallocated()
+        {
+            var (newMapping, newComponents) = _getCurrentReferences();
+            if (!ReferenceEquals(newMapping, _mapping) || !ReferenceEquals(newComponents, _components))
+            {
+                throw new DefaultEcsException($"Underlying pool of Components<{typeof(T).Name}> was reallocated, this instance cannot be used anymore");
+            }
+        }
+#endif
     }
 }

@@ -31,6 +31,26 @@ namespace DefaultEcs.Test.System
             }
         }
 
+        private sealed class InsertingSystem : AEntitySortedSetSystem<int, int>
+        {
+            public InsertingSystem(World world, bool useBuffer)
+                : base(world, useBuffer)
+            { }
+
+            protected override void Update(int state, in Entity entity)
+            {
+                base.Update(state, entity);
+
+                CreateEntity();
+            }
+
+            private void CreateEntity()
+            {
+                // another method to circumvent analyzer warnings
+                World.CreateEntity().Set(3);
+            }
+        }
+
         #region Tests
 
         [Fact]
@@ -169,6 +189,24 @@ namespace DefaultEcs.Test.System
             Check.That(entity3.Get<bool>()).IsFalse();
             Check.That(entity4.Get<bool>()).IsFalse();
         }
+
+#if SAFEDEBUG
+        [Fact]
+        public void Update_Should_throw_on_improper_modification()
+        {
+            using World world = new();
+            world.CreateEntity().Set(5);
+
+            using (ISystem<int> system = new InsertingSystem(world, useBuffer: false))
+            {
+                Check.ThatCode(() => system.Update(0)).Throws<DefaultEcsException>();
+            }
+            using (ISystem<int> system = new InsertingSystem(world, useBuffer: true))
+            {
+                Check.ThatCode(() => system.Update(0)).Not.Throws<DefaultEcsException>();
+            }
+        }
+#endif
 
         #endregion
     }

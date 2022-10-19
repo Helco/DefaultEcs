@@ -124,6 +124,10 @@ namespace DefaultEcs
         /// <returns>The <see cref="Entity"/> associated with the specified key.</returns>
         public Entity this[TKey key] => _entities[key];
 
+#if DEFAULTECS_SAFE
+        internal uint Version { get; private set; }
+#endif
+
         #endregion
 
         #region Initialisation
@@ -219,6 +223,9 @@ namespace DefaultEcs
             {
                 _entityIds.Fill(false);
                 _entities.Clear();
+#if DEFAULTECS_SAFE
+                Version = unchecked(Version + 1);
+#endif
             }
         }
 
@@ -230,11 +237,17 @@ namespace DefaultEcs
 #if NETSTANDARD2_1
             _entities.TrimExcess();
 #endif
+#if DEFAULTECS_SAFE
+            Version = unchecked(Version + 1);
+#endif
         }
 
         void Internal.IEntityContainer.Add(int entityId)
         {
             ArrayExtension.EnsureLength(ref _entityIds, entityId, _worldMaxCapacity);
+#if DEFAULTECS_SAFE
+            Version = unchecked(Version + 1);
+#endif
 
             if (!_entityIds[entityId])
             {
@@ -248,6 +261,10 @@ namespace DefaultEcs
 
         void Internal.IEntityContainer.Remove(int entityId)
         {
+#if DEFAULTECS_SAFE
+            Version = unchecked(Version + 1);
+#endif
+
             if (entityId < _entityIds.Length && _entityIds[entityId])
             {
                 _entityIds[entityId] = false;

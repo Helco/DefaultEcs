@@ -132,6 +132,7 @@ namespace DefaultEcs.System
         /// Does nothing if <see cref="IsEnabled"/> is false or if the inner <see cref="EntitySortedSet{TComponent}"/> is empty.
         /// </summary>
         /// <param name="state">The state to use.</param>
+        /// <exception cref="DefaultEcsException">Thrown in case of improper modifications during update</exception>
         public void Update(TState state)
         {
             if (IsEnabled && SortedSet.Count > 0)
@@ -149,7 +150,16 @@ namespace DefaultEcs.System
                 }
                 else
                 {
+#if DEFAULTECS_SAFE
+                    uint versionBefore = SortedSet.Version;
+#endif
                     Update(state, SortedSet.GetEntities());
+#if DEFAULTECS_SAFE
+                    if (SortedSet.Version != versionBefore)
+                    {
+                        throw new DefaultEcsException("Content of EntitySortedSet was changed during update without using a buffer");
+                    }
+#endif
                 }
 
                 SortedSet.Complete();

@@ -82,6 +82,22 @@ namespace DefaultEcs.Test.System
             }
         }
 
+        private sealed class RemovingSystem : AEntityMultiMapSystem<int, int>
+        {
+            public RemovingSystem(World world)
+                : base(world)
+            { }
+
+            protected override void Update(int state, in int key, in Entity entity)
+            {
+                base.Update(state, key, entity);
+
+#pragma warning disable DEA0005 // Entity modification method used inside the Update method of AEntitySetSystem, AEntitySortedSetSystem or AEntityMultiMapSystem which does not use buffer
+                entity.Dispose();
+#pragma warning restore DEA0005
+            }
+        }
+
         #region Tests
 
         [Fact]
@@ -423,6 +439,18 @@ namespace DefaultEcs.Test.System
             Check.That(entity4.Get<bool>()).IsTrue();
         }
 
-        #endregion
+#if SAFEDEBUG
+        [Fact]
+        public void Update_Should_throw_on_improper_modification()
+        {
+            using World world = new();
+            world.CreateEntity().Set(3);
+
+            using ISystem<int> system = new RemovingSystem(world);
+            Check.ThatCode(() => system.Update(0)).Throws<DefaultEcsException>();
+        }
+#endif
+
+#endregion
     }
 }
