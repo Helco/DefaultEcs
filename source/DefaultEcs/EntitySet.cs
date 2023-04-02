@@ -165,14 +165,18 @@ namespace DefaultEcs
 
         void Internal.IEntityContainer.Remove(int entityId)
         {
-#if DEFAULTECS_SAFE
-            Version = unchecked(Version + 1);
-#endif
             if (entityId < _mapping.Length)
             {
                 ref int index = ref _mapping[entityId];
                 if (index != -1)
                 {
+#if DEFAULTECS_SAFE
+                    // I would prefer putting this in the top scope, but disposing an entity
+                    // triggers a Remove call to all entity containers in the entire world
+                    // which would increase also all unrelated version counters
+                    Version = unchecked(Version + 1);
+#endif
+
                     --Count;
 
                     if (index != Count)

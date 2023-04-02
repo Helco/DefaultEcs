@@ -101,6 +101,20 @@ namespace DefaultEcs.Test.System
             }
         }
 
+        private sealed class DisposingSystem : AEntitySetSystem<Entity>
+        {
+            public DisposingSystem(World world) : base(world, (_0, _1) => world.GetEntities().With<int>().AsSet(), useBuffer: false)
+            {
+            }
+
+            protected override void Update(Entity state, ReadOnlySpan<Entity> _)
+            {
+#pragma warning disable DEA0005
+                state.Dispose();
+#pragma warning restore DEA0005
+            }
+        }
+
         #region Tests
 
         [Fact]
@@ -436,6 +450,18 @@ namespace DefaultEcs.Test.System
             {
                 Check.ThatCode(() => system.Update(0)).Not.Throws<DefaultEcsException>();
             }
+        }
+
+        [Fact]
+        public void Update_Should_not_throw_on_unrelated_dispose()
+        {
+            using World world = new();
+            world.CreateEntity().Set(5);
+            Entity unrelated = world.CreateEntity();
+            unrelated.Set(3f);
+
+            using ISystem<Entity> system = new DisposingSystem(world);
+            Check.ThatCode(() => system.Update(unrelated)).Not.Throws<DefaultEcsException>();
         }
 #endif
 
