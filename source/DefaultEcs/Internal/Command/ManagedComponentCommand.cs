@@ -26,5 +26,12 @@ namespace DefaultEcs.Internal.Command
 
             return sizeof(int);
         }
+
+        public static int WorldPublish(World world, List<object> objects, byte* memory)
+        {
+            world.Publish((T)objects[*(int*)memory]);
+
+            return sizeof(int);
+        }
     }
 }

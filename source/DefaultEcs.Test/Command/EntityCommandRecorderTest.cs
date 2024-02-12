@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using DefaultEcs.Command;
 using NFluent;
@@ -482,6 +483,74 @@ namespace DefaultEcs.Test.Command
             recorder.Execute();
 
             Check.That(world.Single().Get<bool>()).IsTrue();
+        }
+
+        [Fact]
+        public void Publish_should_publish_message_unmanaged()
+        {
+            List<bool> calls = new();
+            using EntityCommandRecorder recorder = new();
+            using World world = new();
+            world.Subscribe((in bool v) => calls.Add(v));
+
+            var record = recorder.Record(world);
+            record.Publish(true);
+            record.Publish(false);
+            record.Set(42);
+
+            Check.That(calls).IsEmpty();
+            recorder.Execute();
+            Check.That(calls.Count).IsEqualTo(2);
+            Check.That(calls[0]).IsEqualTo(true);
+            Check.That(calls[1]).IsEqualTo(false);
+            Check.That(world.Get<int>()).IsEqualTo(42);
+        }
+
+        public struct LargeStruct
+        {
+            public int a;
+            public long b;
+            public double c;
+            public decimal d, e, f, g, h;
+        }
+
+        [Fact]
+        public void Publish_should_publish_message_unmanaged_large_struct()
+        {
+            LargeStruct? called = null;
+            using EntityCommandRecorder recorder = new();
+            using World world = new();
+            world.Subscribe((in LargeStruct v) => called = v);
+
+            var record = recorder.Record(world);
+            record.Publish(new LargeStruct() { a = 1, c = 3, h = 5 });
+            record.Set(42);
+
+            Check.That(called).IsNull();
+            recorder.Execute();
+            Check.That(called).IsNotNull();
+            Check.That(called.Value.a).IsEqualTo(1);
+            Check.That(called.Value.c).IsEqualTo(3);
+            Check.That(called.Value.h).IsEqualTo(5);
+            Check.That(world.Get<int>()).IsEqualTo(42);
+        }
+
+        [Fact]
+        public void Publish_should_publish_message_managed()
+        {
+            string? called = null;
+            using EntityCommandRecorder recorder = new();
+            using World world = new();
+            world.Subscribe((in string s) => called = s);
+
+            var record = recorder.Record(world);
+            record.Publish("abc");
+            record.Set(42);
+
+            Check.That(called).IsNull();
+            recorder.Execute();
+            Check.That(called).IsEqualTo("abc");
+            Check.That(world.Get<int>()).IsEqualTo(42);
         }
 
         [Fact]

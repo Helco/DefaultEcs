@@ -101,6 +101,15 @@ namespace DefaultEcs.Internal.Command
                             ((Entity*)(memoryP + ((EntityOffsetCommand*)commands)->EntityOffset))->Dispose();
                             commandSize = sizeof(EntityOffsetCommand);
                             break;
+
+                        case CommandType.WorldPublish:
+                            worldCommand = (WorldCommand*)commands;
+                            commandSize = sizeof(WorldCommand);
+                            commandSize += ComponentCommands.GetCommand(worldCommand->ComponentIndex).Publish(World.Worlds[worldCommand->WorldId], objects, commands + sizeof(WorldCommand));
+                            break;
+
+                        default:
+                            throw new global::System.IO.InvalidDataException($"Invalid command type: {*(CommandType*)commands}");
                     }
 
                     commands += commandSize;

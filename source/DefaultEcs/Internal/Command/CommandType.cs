@@ -16,6 +16,7 @@
         Remove = 11,
         NotifyChanged = 12,
         Clone = 13,
-        Dispose = 14
+        Dispose = 14,
+        WorldPublish
     }
 }

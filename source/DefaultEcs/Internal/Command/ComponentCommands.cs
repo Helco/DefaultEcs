@@ -13,6 +13,7 @@ namespace DefaultEcs.Internal.Command
         public unsafe delegate int WorldSetComponent(World world, List<object> objects, byte* memory);
 
         public unsafe delegate int EntitySetComponent(in Entity entity, List<object> objects, byte* memory);
+        public unsafe delegate int WorldPublish(World world, List<object> objects, byte* memory);
 
         public sealed unsafe class ComponentCommand<T> : IComponentCommand
         {
@@ -21,6 +22,7 @@ namespace DefaultEcs.Internal.Command
             private static readonly WriteComponent<T> _writeComponentAction;
             private static readonly WorldSetComponent _worldSetAction;
             private static readonly EntitySetComponent _entitySetAction;
+            private static readonly WorldPublish _worldPublishAction;
 
             public static readonly int Index;
             public static readonly int SizeOfT;
@@ -52,6 +54,9 @@ namespace DefaultEcs.Internal.Command
                     _entitySetAction = (EntitySetComponent)typeInfo
                         .GetDeclaredMethod(nameof(UnmanagedComponentCommand<bool>.SetEntityComponent))
                         .CreateDelegate(typeof(EntitySetComponent));
+                    _worldPublishAction = (WorldPublish)typeInfo
+                        .GetDeclaredMethod(nameof(UnmanagedComponentCommand<bool>.WorldPublish))
+                        .CreateDelegate(typeof(WorldPublish));
                 }
                 else
                 {
@@ -60,6 +65,7 @@ namespace DefaultEcs.Internal.Command
                     _writeComponentAction = ManagedComponentCommand<T>.WriteComponent;
                     _worldSetAction = ManagedComponentCommand<T>.Set;
                     _entitySetAction = ManagedComponentCommand<T>.Set;
+                    _worldPublishAction = ManagedComponentCommand<T>.WorldPublish;
                 }
             }
 
@@ -90,6 +96,8 @@ namespace DefaultEcs.Internal.Command
             public void Remove(in Entity entity) => entity.Remove<T>();
 
             public void NotifyChanged(in Entity entity) => entity.NotifyChanged<T>();
+
+            public int Publish(World world, List<object> objects, byte* memory) => _worldPublishAction(world, objects, memory);
 
             #endregion
         }

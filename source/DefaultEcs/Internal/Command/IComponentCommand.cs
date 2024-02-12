@@ -13,5 +13,6 @@ namespace DefaultEcs.Internal.Command
         void SetSameAsWorld(in Entity entity);
         void Remove(in Entity entity);
         void NotifyChanged(in Entity entity);
+        int Publish(World world, List<object> objects, byte* memory);
     }
 }

@@ -62,6 +62,13 @@ namespace DefaultEcs.Command
         /// <exception cref="InvalidOperationException">Command buffer is full.</exception>
         public void Remove<T>() => _recorder.WriteCommand(new WorldCommand(CommandType.WorldRemove, ComponentCommands.ComponentCommand<T>.Index, _worldId));
 
+        /// <summary>
+        /// Publishes a <typeparamref name="T"/> object.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to publish.</typeparam>
+        /// <param name="message">The object to publish.</param>
+        public void Publish<T>(in T message) => _recorder.WriteComponentCommand(new WorldCommand(CommandType.WorldPublish, ComponentCommands.ComponentCommand<T>.Index, _worldId), message);
+
         #endregion
     }
 }

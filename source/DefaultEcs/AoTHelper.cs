@@ -56,6 +56,7 @@ namespace DefaultEcs
                 UnmanagedComponentCommand<T>.WriteComponent(default, (byte*)&value, default);
                 UnmanagedComponentCommand<T>.SetWorldComponent(world, default, (byte*)&value);
                 UnmanagedComponentCommand<T>.SetEntityComponent(entity, default, (byte*)&value);
+                UnmanagedComponentCommand<T>.WorldPublish(world, default, (byte*)&value);
             }
         }
     }
