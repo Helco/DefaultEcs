@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -376,6 +377,7 @@ namespace DefaultEcs
         }
 
         /// <inheritdoc/>
+        [global::System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0008:Use explicit type", Justification = "<Pending>")]
         public void TrimExcess()
         {
 #if NETSTANDARD2_1
@@ -384,10 +386,38 @@ namespace DefaultEcs
 
             ArrayExtension.Trim(ref _mapping, Array.FindLastIndex(_mapping, i => i.Entities != null) + 1);
 
+            int emptyKeys = 0;
             foreach (Entities entities in _entities.Values)
             {
-                entities.TrimExcess();
+                if (entities.Count == 0)
+                {
+                    emptyKeys++;
+                }
+                else
+                {
+                    entities.TrimExcess();
+                }
             }
+
+            if (emptyKeys > 0)
+            {
+                var toBeRemoved = ArrayPool<TKey>.Shared.Rent(emptyKeys);
+                int i = 0;
+                foreach (var (key, value) in _entities)
+                {
+                    if (value.Count == 0)
+                    {
+                        toBeRemoved[i++] = key;
+                    }
+                }
+                for (i = 0; i < emptyKeys; i++)
+                {
+                    _entities.Remove(toBeRemoved[i]);
+                }
+                Array.Fill(toBeRemoved, default, 0, emptyKeys);
+                ArrayPool<TKey>.Shared.Return(toBeRemoved);
+            }
+
 #if DEFAULTECS_SAFE
             Version = unchecked(Version + 1);
 #endif

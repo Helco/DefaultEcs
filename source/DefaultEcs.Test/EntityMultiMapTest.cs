@@ -234,6 +234,28 @@ namespace DefaultEcs.Test
         }
 
         [Fact]
+        public void TrimExcess_Should_Remove_Unused_keys()
+        {
+            using World world = new();
+            using EntityMultiMap<int> map = world.GetEntities().AsMultiMap<int>();
+            world.CreateEntity().Set(42);
+
+            Entity e = world.CreateEntity();
+            e.Set(1337);
+
+            IDictionary entities = (IDictionary)typeof(EntityMultiMap<int>).GetField("_entities", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(map);
+
+            Check.That(entities.Count).IsEqualTo(2);
+
+            e.Dispose();
+            Check.That(entities.Count).IsEqualTo(2);
+
+            map.TrimExcess();
+            Check.That(entities.Count).IsEqualTo(1);
+
+        }
+
+        [Fact]
         public void EntityAdded_Should_be_called()
         {
             using World world = new();
