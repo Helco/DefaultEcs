@@ -149,7 +149,8 @@ namespace DefaultEcs.Internal
             int componentIndex = message.EntityId < _mapping.Length ? _mapping[message.EntityId] : -1;
             if (componentIndex != -1)
             {
-                message.Reader.OnRead(_components[componentIndex], new Entity(_worldId, _links[componentIndex].EntityId));
+                Entity entity = message.EntityId == 0 ? new(_worldId) : new(_worldId, _links[componentIndex].EntityId);
+                message.Reader.OnRead(_components[componentIndex], entity);
             }
         }
 

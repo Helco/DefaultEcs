@@ -17,6 +17,34 @@ namespace DefaultEcs.Test
     {
         private record struct FlagType;
 
+        private sealed class ComponentReader : IComponentReader
+        {
+            public int ComponentCount;
+            public int? IntValue;
+            public long? LongValue;
+            public float? FloatValue;
+
+            public void OnRead<T>(in T component, in Entity componentOwner)
+            {
+                ++ComponentCount;
+
+                if (typeof(T) == typeof(int))
+                {
+                    IntValue = (int)(object)component;
+                }
+
+                if (typeof(T) == typeof(long))
+                {
+                    LongValue = (long)(object)component;
+                }
+
+                if (typeof(T) == typeof(float))
+                {
+                    FloatValue = (float)(object)component;
+                }
+            }
+        }
+
         #region Tests
 
         [Fact]
@@ -1001,6 +1029,35 @@ namespace DefaultEcs.Test
             using World world = new();
 
             Check.That(world.Has<bool>()).IsFalse();
+        }
+
+        [Fact]
+        public void ReadAllWorldComponents_Should_throw_ArgumentNullException_When_reader_is_null()
+        {
+            using World world = new(1);
+
+            Check
+                .ThatCode(() => world.ReadAllWorldComponents(null))
+                .Throws<ArgumentNullException>()
+                .WithProperty(e => e.ParamName, "reader");
+        }
+
+        [Fact]
+        public void ReadAllWorldComponents_Should_callback_reader()
+        {
+            using World world = new(42);
+
+            world.Set(42);
+            world.Set(1337L);
+
+            ComponentReader reader = new();
+
+            world.ReadAllWorldComponents(reader);
+
+            Check.That(reader.ComponentCount).IsEqualTo(2);
+            Check.That(reader.IntValue).IsEqualTo(42);
+            Check.That(reader.LongValue).IsEqualTo(1337L);
+            Check.That(reader.FloatValue.HasValue).IsFalse();
         }
 
         #endregion

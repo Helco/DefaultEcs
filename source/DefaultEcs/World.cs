@@ -398,6 +398,17 @@ namespace DefaultEcs
         }
 
         /// <summary>
+        /// Calls on <paramref name="reader"/> with all the component of the current <see cref="World"/>.
+        /// This method is primiraly used for serialization purpose and should not be called in game logic.
+        /// </summary>
+        /// <param name="reader">The <see cref="IComponentReader"/> instance to be used as callback with the current <see cref="World"/> components.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="reader"/> is null.</exception>
+        public void ReadAllWorldComponents(IComponentReader reader)
+        {
+            Publisher.Publish(WorldId, new ComponentReadMessage(0, reader.ThrowIfNull()));
+        }
+
+        /// <summary>
         /// Gets an <see cref="EntityQueryBuilder"/> to create a subset of <see cref="Entity"/> of the current <see cref="World"/>.
         /// </summary>
         /// <returns>An <see cref="EntityQueryBuilder"/>.</returns>
