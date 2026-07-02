@@ -66,13 +66,16 @@ namespace DefaultEcs.Test.Serialization
         [Fact]
         public void Read_Should_work_When_string_is_multi_line()
         {
+            const string newline =
+@"
+";
             const string input =
 @"""kikoo
 lol""";
 
             using Stream stream = new MemoryStream(Encoding.ASCII.GetBytes(input));
 
-            Check.That(Read<string>(stream)).IsEqualTo("kikoo" + Environment.NewLine + "lol");
+            Check.That(Read<string>(stream)).IsEqualTo("kikoo" + newline + "lol");
         }
 
         [Fact]
